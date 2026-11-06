@@ -1,237 +1,128 @@
--- MySQL dump 10.13  Distrib 8.4.11, for Linux (x86_64)
---
--- Host: localhost    Database: cyberquest_db
--- ------------------------------------------------------
--- Server version	8.4.11-0ubuntu0.26.04.1
+-- CyberQuest database schema (MySQL 8 / MariaDB 10.5+)
+-- Import first, then import seed.sql for the lesson content.
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+CREATE DATABASE IF NOT EXISTS cyberquest_db
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE cyberquest_db;
 
---
--- Table structure for table `certificates`
---
+SET FOREIGN_KEY_CHECKS = 0;
+DROP VIEW  IF EXISTS v_module_progress;
+SET FOREIGN_KEY_CHECKS = 1;
 
-DROP TABLE IF EXISTS `certificates`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `certificates` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `module_id` int NOT NULL,
-  `certificate_code` char(16) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `issued_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `certificate_code` (`certificate_code`),
-  UNIQUE KEY `user_id` (`user_id`,`module_id`),
-  KEY `module_id` (`module_id`),
-  CONSTRAINT `certificates_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `certificates_ibfk_2` FOREIGN KEY (`module_id`) REFERENCES `modules` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+-- Accounts
+CREATE TABLE users (
+  id            INT NOT NULL AUTO_INCREMENT,
+  username      VARCHAR(50)  NOT NULL,
+  email         VARCHAR(100) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  full_name     VARCHAR(100) NOT NULL,
+  role          ENUM('student','admin') NOT NULL DEFAULT 'student',
+  created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_users_username (username),
+  UNIQUE KEY uq_users_email (email)
+) ENGINE=InnoDB;
 
---
--- Dumping data for table `certificates`
---
+-- One module = one security topic. is_published = 0 shows as "Coming soon".
+CREATE TABLE modules (
+  id                INT NOT NULL AUTO_INCREMENT,
+  title             VARCHAR(100) NOT NULL,
+  slug              VARCHAR(100) NOT NULL,
+  description       TEXT,
+  difficulty        ENUM('Easy','Medium','Hard') NOT NULL DEFAULT 'Easy',
+  estimated_minutes INT NOT NULL DEFAULT 20,
+  order_no          INT NOT NULL DEFAULT 1,
+  is_published      TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_modules_slug (slug)
+) ENGINE=InnoDB;
 
-LOCK TABLES `certificates` WRITE;
-/*!40000 ALTER TABLE `certificates` DISABLE KEYS */;
-/*!40000 ALTER TABLE `certificates` ENABLE KEYS */;
-UNLOCK TABLES;
+-- A lesson holds trusted HTML content and optionally a simulation (sim_key
+-- matches a function in public/assets/js/sims.js).
+CREATE TABLE lessons (
+  id        INT NOT NULL AUTO_INCREMENT,
+  module_id INT NOT NULL,
+  title     VARCHAR(150) NOT NULL,
+  content   MEDIUMTEXT NOT NULL,
+  sim_key   VARCHAR(30) DEFAULT NULL,
+  order_no  INT NOT NULL DEFAULT 1,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_lessons_order (module_id, order_no),
+  CONSTRAINT fk_lessons_module FOREIGN KEY (module_id) REFERENCES modules (id) ON DELETE CASCADE
+) ENGINE=InnoDB;
 
---
--- Table structure for table `challenges`
---
+-- mcq: options is a JSON array and the answer is the option index ("0".."3").
+-- text: the answer is free text. Both store SHA-256(lowercase(trim(answer))).
+CREATE TABLE challenges (
+  id             INT NOT NULL AUTO_INCREMENT,
+  lesson_id      INT NOT NULL,
+  challenge_type ENUM('mcq','text') NOT NULL DEFAULT 'text',
+  question       TEXT NOT NULL,
+  options        JSON DEFAULT NULL,
+  hint           TEXT,
+  answer_hash    CHAR(64) NOT NULL,
+  points         INT NOT NULL DEFAULT 10,
+  order_no       INT NOT NULL DEFAULT 1,
+  PRIMARY KEY (id),
+  KEY idx_challenges_lesson (lesson_id, order_no),
+  CONSTRAINT fk_challenges_lesson FOREIGN KEY (lesson_id) REFERENCES lessons (id) ON DELETE CASCADE,
+  CONSTRAINT chk_mcq_options CHECK (challenge_type = 'text' OR options IS NOT NULL)
+) ENGINE=InnoDB;
 
-DROP TABLE IF EXISTS `challenges`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `challenges` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `lesson_id` int NOT NULL,
-  `question` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  `hint` text COLLATE utf8mb4_unicode_ci,
-  `answer_hash` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `points` int DEFAULT '10',
-  PRIMARY KEY (`id`),
-  KEY `lesson_id` (`lesson_id`),
-  CONSTRAINT `challenges_ibfk_1` FOREIGN KEY (`lesson_id`) REFERENCES `lessons` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+CREATE TABLE enrollments (
+  id           INT NOT NULL AUTO_INCREMENT,
+  user_id      INT NOT NULL,
+  module_id    INT NOT NULL,
+  status       ENUM('in_progress','completed') NOT NULL DEFAULT 'in_progress',
+  started_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+  completed_at DATETIME DEFAULT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_enrollment (user_id, module_id),
+  KEY idx_enrollments_module (module_id),
+  CONSTRAINT fk_enrollments_user   FOREIGN KEY (user_id)   REFERENCES users (id)   ON DELETE CASCADE,
+  CONSTRAINT fk_enrollments_module FOREIGN KEY (module_id) REFERENCES modules (id) ON DELETE CASCADE
+) ENGINE=InnoDB;
 
---
--- Dumping data for table `challenges`
---
+-- Every attempt is logged. The composite index serves the "solved?" and rate-limit queries.
+CREATE TABLE submissions (
+  id               INT NOT NULL AUTO_INCREMENT,
+  user_id          INT NOT NULL,
+  challenge_id     INT NOT NULL,
+  submitted_answer VARCHAR(255) NOT NULL,
+  is_correct       TINYINT(1) NOT NULL,
+  submitted_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_submissions_lookup (user_id, challenge_id, is_correct, submitted_at),
+  KEY idx_submissions_challenge (challenge_id),
+  CONSTRAINT fk_submissions_user      FOREIGN KEY (user_id)      REFERENCES users (id)      ON DELETE CASCADE,
+  CONSTRAINT fk_submissions_challenge FOREIGN KEY (challenge_id) REFERENCES challenges (id) ON DELETE CASCADE
+) ENGINE=InnoDB;
 
-LOCK TABLES `challenges` WRITE;
-/*!40000 ALTER TABLE `challenges` DISABLE KEYS */;
-/*!40000 ALTER TABLE `challenges` ENABLE KEYS */;
-UNLOCK TABLES;
+-- One certificate per user per module; the 16-character code is public for verification.
+CREATE TABLE certificates (
+  id               INT NOT NULL AUTO_INCREMENT,
+  user_id          INT NOT NULL,
+  module_id        INT NOT NULL,
+  certificate_code CHAR(16) NOT NULL,
+  issued_at        DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_certificate_code (certificate_code),
+  UNIQUE KEY uq_certificate_user_module (user_id, module_id),
+  KEY idx_certificates_module (module_id),
+  CONSTRAINT fk_certificates_user   FOREIGN KEY (user_id)   REFERENCES users (id)   ON DELETE CASCADE,
+  CONSTRAINT fk_certificates_module FOREIGN KEY (module_id) REFERENCES modules (id) ON DELETE CASCADE
+) ENGINE=InnoDB;
 
---
--- Table structure for table `enrollments`
---
-
-DROP TABLE IF EXISTS `enrollments`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `enrollments` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `module_id` int NOT NULL,
-  `status` enum('in_progress','completed') COLLATE utf8mb4_unicode_ci DEFAULT 'in_progress',
-  `started_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `completed_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `user_id` (`user_id`,`module_id`),
-  KEY `module_id` (`module_id`),
-  CONSTRAINT `enrollments_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `enrollments_ibfk_2` FOREIGN KEY (`module_id`) REFERENCES `modules` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `enrollments`
---
-
-LOCK TABLES `enrollments` WRITE;
-/*!40000 ALTER TABLE `enrollments` DISABLE KEYS */;
-/*!40000 ALTER TABLE `enrollments` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `lessons`
---
-
-DROP TABLE IF EXISTS `lessons`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `lessons` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `module_id` int NOT NULL,
-  `title` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `content` mediumtext COLLATE utf8mb4_unicode_ci NOT NULL,
-  `order_no` int DEFAULT '1',
-  PRIMARY KEY (`id`),
-  KEY `module_id` (`module_id`),
-  CONSTRAINT `lessons_ibfk_1` FOREIGN KEY (`module_id`) REFERENCES `modules` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `lessons`
---
-
-LOCK TABLES `lessons` WRITE;
-/*!40000 ALTER TABLE `lessons` DISABLE KEYS */;
-/*!40000 ALTER TABLE `lessons` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `modules`
---
-
-DROP TABLE IF EXISTS `modules`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `modules` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `title` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `slug` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
-  `difficulty` enum('Easy','Medium','Hard') COLLATE utf8mb4_unicode_ci DEFAULT 'Easy',
-  `order_no` int DEFAULT '1',
-  `is_published` tinyint(1) DEFAULT '1',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `slug` (`slug`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `modules`
---
-
-LOCK TABLES `modules` WRITE;
-/*!40000 ALTER TABLE `modules` DISABLE KEYS */;
-/*!40000 ALTER TABLE `modules` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `submissions`
---
-
-DROP TABLE IF EXISTS `submissions`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `submissions` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `challenge_id` int NOT NULL,
-  `submitted_answer` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `is_correct` tinyint(1) NOT NULL,
-  `submitted_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `user_id` (`user_id`),
-  KEY `challenge_id` (`challenge_id`),
-  CONSTRAINT `submissions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `submissions_ibfk_2` FOREIGN KEY (`challenge_id`) REFERENCES `challenges` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `submissions`
---
-
-LOCK TABLES `submissions` WRITE;
-/*!40000 ALTER TABLE `submissions` DISABLE KEYS */;
-/*!40000 ALTER TABLE `submissions` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `users`
---
-
-DROP TABLE IF EXISTS `users`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `users` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `username` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `email` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `password_hash` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `full_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `role` enum('student','admin') COLLATE utf8mb4_unicode_ci DEFAULT 'student',
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `username` (`username`),
-  UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `users`
---
-
-LOCK TABLES `users` WRITE;
-/*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'xman','xman@gmail.com','$2y$12$ojsdBsDx9nzl9TsxTy5ZbePo.a7zl/0iwISP60jQ15dlK5V3kZUcq','xman','student','2026-11-04 15:04:49');
-/*!40000 ALTER TABLE `users` ENABLE KEYS */;
-UNLOCK TABLES;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed on 2026-11-04 15:32:40
+-- Per-enrollment progress: total challenges in the module vs. distinct ones solved.
+CREATE VIEW v_module_progress AS
+SELECT e.user_id,
+       e.module_id,
+       (SELECT COUNT(*)
+          FROM challenges c JOIN lessons l ON l.id = c.lesson_id
+         WHERE l.module_id = e.module_id) AS total_challenges,
+       (SELECT COUNT(DISTINCT s.challenge_id)
+          FROM submissions s
+          JOIN challenges c ON c.id = s.challenge_id
+          JOIN lessons l ON l.id = c.lesson_id
+         WHERE s.user_id = e.user_id AND l.module_id = e.module_id AND s.is_correct = 1) AS solved_challenges
+FROM enrollments e;
