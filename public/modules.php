@@ -7,7 +7,7 @@ require_login();
 $userId = (int)$_SESSION['user_id'];
 
 $st = $pdo->prepare(
-    'SELECT m.id, m.title, m.description, m.difficulty, m.estimated_minutes, m.is_published,
+    'SELECT m.id, m.slug, m.title, m.description, m.difficulty, m.estimated_minutes, m.is_published,
             e.status, p.solved_challenges, p.total_challenges,
             (SELECT COUNT(*) FROM lessons l WHERE l.module_id = m.id) AS lesson_count
      FROM modules m
@@ -24,8 +24,10 @@ $activeNav = 'modules';
 require __DIR__ . '/../includes/header.php';
 ?>
 <div class="module-grid">
-    <?php foreach ($modules as $m): ?>
+    <?php foreach ($modules as $m): $art = module_art($m['slug'], (int)$m['id']); ?>
         <div class="module-card <?= $m['is_published'] ? '' : 'is-soon' ?>">
+            <div class="module-art <?= $m['is_published'] ? $art['g'] : 'g1' ?>"><span><?= $art['icon'] ?></span></div>
+            <div class="module-body">
             <span class="difficulty"><?= e($m['difficulty']) ?></span>
             <h3><?= e($m['title']) ?></h3>
             <p><?= e($m['description']) ?></p>
@@ -45,6 +47,7 @@ require __DIR__ . '/../includes/header.php';
                     <?= $m['status'] ? 'Continue' : 'View module' ?>
                 </a>
             <?php endif; ?>
+            </div>
         </div>
     <?php endforeach; ?>
 </div>

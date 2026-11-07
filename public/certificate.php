@@ -28,6 +28,8 @@ if (!$cert) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Certificate | CyberQuest</title>
     <link rel="stylesheet" href="assets/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <script src="assets/js/theme.js"></script>
 </head>
 <body class="cert-body">
     <div class="cert">

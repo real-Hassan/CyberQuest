@@ -21,7 +21,7 @@ $st->execute([$userId]);
 $stats = $st->fetch();
 
 $st = $pdo->prepare(
-    'SELECT m.id, m.title, m.description, m.difficulty, e.status,
+    'SELECT m.id, m.slug, m.title, m.description, m.difficulty, e.status,
             p.solved_challenges, p.total_challenges
      FROM enrollments e
      JOIN modules m ON m.id = e.module_id
@@ -38,17 +38,17 @@ require __DIR__ . '/../includes/header.php';
 ?>
 <section class="welcome-section">
     <div>
-        <h2>Welcome, <?= e($user['full_name']) ?>!</h2>
+        <h2>Hey, <?= e(explode(' ', trim($user['full_name']))[0]) ?>! 👋</h2>
         <p>Pick a module, read the lesson, play with the simulation, then solve the challenges.</p>
     </div>
     <a href="modules.php" class="btn">Browse modules</a>
 </section>
 
 <section class="stats-grid">
-    <div class="stat-card"><span>Enrolled Modules</span><h2><?= (int)$counts['enrolled'] ?></h2><small>Modules you started</small></div>
-    <div class="stat-card"><span>Completed Modules</span><h2><?= (int)$counts['done'] ?></h2><small>Certificates earned</small></div>
-    <div class="stat-card"><span>Solved Challenges</span><h2><?= (int)$stats['solved'] ?></h2><small>Correct answers</small></div>
-    <div class="stat-card"><span>Total Points</span><h2><?= (int)$stats['pts'] ?></h2><small>Points earned</small></div>
+    <div class="stat-card"><div class="stat-icon">📚</div><div><span>Enrolled Modules</span><h2><?= (int)$counts['enrolled'] ?></h2></div></div>
+    <div class="stat-card"><div class="stat-icon">✅</div><div><span>Completed Modules</span><h2><?= (int)$counts['done'] ?></h2></div></div>
+    <div class="stat-card"><div class="stat-icon">🎯</div><div><span>Solved Challenges</span><h2><?= (int)$stats['solved'] ?></h2></div></div>
+    <div class="stat-card"><div class="stat-icon">⭐</div><div><span>Total Points</span><h2><?= (int)$stats['pts'] ?></h2></div></div>
 </section>
 
 <section class="learning-section">
@@ -56,14 +56,18 @@ require __DIR__ . '/../includes/header.php';
     <?php if ($modules): ?>
         <div class="module-grid">
             <?php foreach ($modules as $m):
-                $pct = percent($m['solved_challenges'], $m['total_challenges']); ?>
+                $pct = percent($m['solved_challenges'], $m['total_challenges']);
+                $art = module_art($m['slug'], (int)$m['id']); ?>
                 <div class="module-card">
+                    <div class="module-art <?= $art['g'] ?>"><span><?= $art['icon'] ?></span></div>
+                    <div class="module-body">
                     <span class="difficulty"><?= e($m['difficulty']) ?></span>
                     <h3><?= e($m['title']) ?></h3>
                     <p><?= e($m['description']) ?></p>
                     <div class="progress"><div style="width:<?= $pct ?>%"></div></div>
                     <div class="module-status"><?= (int)$m['solved_challenges'] ?>/<?= (int)$m['total_challenges'] ?> challenges · <?= e(ucfirst(str_replace('_', ' ', $m['status']))) ?></div>
-                    <a href="module.php?id=<?= (int)$m['id'] ?>" class="module-btn">Open Module</a>
+                    <a href="module.php?id=<?= (int)$m['id'] ?>" class="module-btn">Continue</a>
+                    </div>
                 </div>
             <?php endforeach; ?>
         </div>

@@ -73,3 +73,14 @@ function finish_module_if_done(PDO $pdo, int $userId, int $moduleId): bool
     }
     return true;
 }
+
+// Emoji + gradient class for a module card (purely visual, no DB column needed).
+function module_art(string $slug, int $id = 0): array
+{
+    $icons = [
+        'linux-basics' => '🐧', 'sql-injection' => '🗄️', 'xss' => '📝', 'password-brute-force' => '🔑',
+        'directory-traversal' => '📂', 'csrf' => '🎭', 'command-injection' => '💻',
+        'file-upload-attacks' => '📤', 'network-scanning-basics' => '📡',
+    ];
+    return ['icon' => $icons[$slug] ?? '🛡️', 'g' => 'g' . ((($id + 5) % 6) + 1)];
+}

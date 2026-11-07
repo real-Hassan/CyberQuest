@@ -163,6 +163,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <link rel="stylesheet"
           href="assets/css/styles.css">
 
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <script src="assets/js/theme.js"></script>
 </head>
 
 <body>

@@ -24,6 +24,14 @@ Command Injection, File Upload Attacks and Network Scanning Basics are listed as
 
 Each lesson has 4 challenges (2 multiple choice, 2 text answer) with hints: 24 challenges, 305 points in total.
 
+## Look and feel
+
+- Light and dark themes: follows the system setting by default, with a toggle (top bar, or top-right on login pages). The choice is saved in `localStorage`.
+- Colors, radii and gradients are CSS variables at the top of `public/assets/css/styles.css`; change them there to re-theme the whole site.
+- Motion is light (fade-ins, hover lifts, progress fills, XP toast, confetti on module completion) and switches off automatically for users with "reduce motion" enabled.
+- Fonts (Nunito, JetBrains Mono) load from Google Fonts and fall back to system fonts when offline.
+- Module card icons and colors come from `module_art()` in `includes/functions.php` (no database column needed).
+
 ## Requirements
 
 - PHP 8.1+ with the `pdo_mysql` extension
@@ -56,7 +64,8 @@ CyberQuest/
     └── assets/
         ├── css/styles.css
         └── js/
-            ├── main.js      Answer submission (fetch) and simulation start-up
+            ├── theme.js     Light/dark theme (loaded in <head>)
+            ├── main.js      Answer submission, XP toast, confetti, simulation start-up
             └── sims.js      The six simulations
 ```
 

@@ -46,8 +46,10 @@ $pageSub   = $module['difficulty'] . ' · about ' . (int)$module['estimated_minu
 $activeNav = 'modules';
 require __DIR__ . '/../includes/header.php';
 ?>
-<section class="card">
-    <p class="muted"><?= e($module['description']) ?></p>
+<?php $art = module_art($module['slug'], (int)$moduleId); ?>
+<section class="card module-hero <?= $art['g'] ?>">
+  <div>
+    <p><?= e($module['description']) ?></p>
 
     <?php if ($enrollment): ?>
         <div class="progress progress-lg"><div style="width:<?= $pct ?>%"></div></div>
@@ -62,6 +64,8 @@ require __DIR__ . '/../includes/header.php';
             <button class="btn" type="submit">Enroll in this module</button>
         </form>
     <?php endif; ?>
+  </div>
+  <div class="module-hero-icon"><?= $art['icon'] ?></div>
 </section>
 
 <section class="learning-section">

@@ -51,7 +51,7 @@ require __DIR__ . '/../includes/header.php';
     <section class="card">
         <h2 class="card-title">Interactive simulation</h2>
         <p class="muted">Everything runs in your browser. Nothing here touches a real server.</p>
-        <div class="sim" data-sim="<?= e($lesson['sim_key']) ?>"></div>
+        <div class="sim-window"><div class="sim-bar"><i></i><i></i><i></i></div><div class="sim" data-sim="<?= e($lesson['sim_key']) ?>"></div></div>
     </section>
     <script src="assets/js/sims.js" defer></script>
 <?php endif; ?>
