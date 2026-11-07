@@ -59,7 +59,7 @@
                         btn.textContent = 'Solved ✓';
                         form.querySelectorAll('input').forEach((i) => { if (i.type !== 'hidden') i.disabled = true; });
                         if (data.points) toast('+' + data.points + ' XP');
-                        if (data.completed) { confetti(); setTimeout(() => toast('Module complete! 🎉'), 600); }
+                        if (data.completed) { confetti(); setTimeout(() => toast(data.all_done ? 'All courses complete! Master certificate unlocked' : 'Module complete!'), 600); }
                     } else {
                         form.classList.remove('shake'); void form.offsetWidth; form.classList.add('shake');
                     }

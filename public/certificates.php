@@ -18,7 +18,18 @@ $pageTitle = 'Certificates';
 $pageSub   = 'Earned by solving every challenge in a module.';
 $activeNav = 'certificates';
 require __DIR__ . '/../includes/header.php';
+$allDone = all_modules_done($pdo, $userId);
 ?>
+<?php if ($allDone): ?>
+    <section class="congrats">
+        <div class="congrats-icon"><?= icon('trophy') ?></div>
+        <div>
+            <h2>Master Certificate unlocked</h2>
+            <p>Awarded for completing every CyberQuest course. ID: <?= e(master_code($userId)) ?></p>
+        </div>
+        <a class="btn" href="certificate.php?master=1">View</a>
+    </section>
+<?php endif; ?>
 <?php if ($certs): ?>
     <div class="lesson-list">
         <?php foreach ($certs as $c): ?>
@@ -33,7 +44,7 @@ require __DIR__ . '/../includes/header.php';
     </div>
 <?php else: ?>
     <div class="empty-state">
-        <div class="empty-icon">♜</div>
+        <div class="empty-icon"><?= icon('award') ?></div>
         <h3>No certificates yet</h3>
         <p>Solve every challenge in a module to earn one.</p>
     </div>

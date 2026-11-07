@@ -345,3 +345,20 @@ pre, code { font-family: var(--mono); }
 /* Gradient hero on the module page (placed last so it beats .card) */
 .module-hero.g1 { background: var(--g1); } .module-hero.g2 { background: var(--g2); } .module-hero.g3 { background: var(--g3); }
 .module-hero.g4 { background: var(--g4); } .module-hero.g5 { background: var(--g5); } .module-hero.g6 { background: var(--g6); }
+
+/* Inline SVG icons (replace emojis) */
+.ico { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: -.12em; }
+.module-art, .module-hero-icon { color: #fff; }
+.stat-icon, .empty-icon { color: var(--primary); }
+.empty-icon { display: flex; justify-content: center; }
+
+/* All-courses congratulations banner + master certificate */
+.congrats { position: relative; overflow: hidden; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; background: var(--g4, var(--g1)); color: #fff; border-radius: 24px; padding: 26px 32px; margin-bottom: 24px; box-shadow: var(--shadow); }
+.congrats > div:nth-child(2) { flex: 1; min-width: 220px; }
+.congrats h2 { font-size: 24px; font-weight: 900; margin-bottom: 4px; }
+.congrats p { opacity: .94; }
+.congrats-icon { font-size: 46px; display: grid; place-items: center; animation: float 5s ease-in-out infinite; }
+.congrats .btn { background: #fff; color: var(--primary-d); box-shadow: 0 4px 0 rgba(0, 0, 0, .18); }
+.cert-master { border-color: #f5a623; }
+.cert-master .cert-brand, .cert-master h2 { color: #d98200; }
+.cert-trophy { font-size: 54px; color: #f5a623; margin-bottom: 8px; display: flex; justify-content: center; }

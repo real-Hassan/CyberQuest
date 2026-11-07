@@ -17,6 +17,9 @@ if ($checked && preg_match('/^[A-F0-9]{16}$/', $code)) {
     );
     $st->execute([$code]);
     $result = $st->fetch() ?: null;
+    if (!$result && ($mc = master_cert_lookup($pdo, $code))) {
+        $result = ['full_name' => $mc['full_name'], 'title' => 'ALL COURSES (Master Certificate)', 'issued_at' => $mc['issued_at']];
+    }
 }
 ?>
 <!DOCTYPE html>

@@ -35,20 +35,31 @@ $pageTitle = 'Dashboard';
 $pageSub   = 'Welcome back to your cybersecurity journey.';
 $activeNav = 'dashboard';
 require __DIR__ . '/../includes/header.php';
+$allDone = all_modules_done($pdo, $userId);
 ?>
+<?php if ($allDone): ?>
+<section class="congrats">
+    <div class="congrats-icon"><?= icon('trophy') ?></div>
+    <div>
+        <h2>Congratulations, you completed every course!</h2>
+        <p>You solved all the challenges in every CyberQuest module. Your master certificate is ready.</p>
+    </div>
+    <a href="certificate.php?master=1" class="btn">View master certificate</a>
+</section>
+<?php endif; ?>
 <section class="welcome-section">
     <div>
-        <h2>Hey, <?= e(explode(' ', trim($user['full_name']))[0]) ?>! 👋</h2>
+        <h2>Hey, <?= e(explode(' ', trim($user['full_name']))[0]) ?>! <?= icon('zap') ?></h2>
         <p>Pick a module, read the lesson, play with the simulation, then solve the challenges.</p>
     </div>
     <a href="modules.php" class="btn">Browse modules</a>
 </section>
 
 <section class="stats-grid">
-    <div class="stat-card"><div class="stat-icon">📚</div><div><span>Enrolled Modules</span><h2><?= (int)$counts['enrolled'] ?></h2></div></div>
-    <div class="stat-card"><div class="stat-icon">✅</div><div><span>Completed Modules</span><h2><?= (int)$counts['done'] ?></h2></div></div>
-    <div class="stat-card"><div class="stat-icon">🎯</div><div><span>Solved Challenges</span><h2><?= (int)$stats['solved'] ?></h2></div></div>
-    <div class="stat-card"><div class="stat-icon">⭐</div><div><span>Total Points</span><h2><?= (int)$stats['pts'] ?></h2></div></div>
+    <div class="stat-card"><div class="stat-icon"><?= icon('book') ?></div><div><span>Enrolled Modules</span><h2><?= (int)$counts['enrolled'] ?></h2></div></div>
+    <div class="stat-card"><div class="stat-icon"><?= icon('check') ?></div><div><span>Completed Modules</span><h2><?= (int)$counts['done'] ?></h2></div></div>
+    <div class="stat-card"><div class="stat-icon"><?= icon('target') ?></div><div><span>Solved Challenges</span><h2><?= (int)$stats['solved'] ?></h2></div></div>
+    <div class="stat-card"><div class="stat-icon"><?= icon('star') ?></div><div><span>Total Points</span><h2><?= (int)$stats['pts'] ?></h2></div></div>
 </section>
 
 <section class="learning-section">
@@ -73,7 +84,7 @@ require __DIR__ . '/../includes/header.php';
         </div>
     <?php else: ?>
         <div class="empty-state">
-            <div class="empty-icon">⌘</div>
+            <div class="empty-icon"><?= icon('grid') ?></div>
             <h3>No modules yet</h3>
             <p>Enroll in a module from the <a href="modules.php">modules page</a> to start learning.</p>
         </div>

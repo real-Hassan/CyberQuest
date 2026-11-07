@@ -4,13 +4,12 @@ $localConfig = __DIR__ . '/db.local.php';
 
 if (file_exists($localConfig)) {
     require $localConfig;
-    return;
 }
 
 $host = getenv('DB_HOST') ?: 'localhost';
 $dbname = getenv('DB_NAME') ?: 'cyberquest_db';
 $username = getenv('DB_USER') ?: 'cyberquest_user';
-$password = getenv('DB_PASSWORD');
+$password = getenv('DB_PASSWORD') ?: 'CyberQuest123!';
 
 if ($password === false) {
     die("Database configuration is missing.");
@@ -27,5 +26,5 @@ try {
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
-    die("Database connection failed.");
+    die("Database connection failed: " . $e->getMessage());
 }

@@ -75,6 +75,7 @@ reply(200, [
     'correct'   => $correct,
     'points'    => $correct ? (int)$ch['points'] : 0,
     'completed' => $completed,
+    'all_done'  => $completed && all_modules_done($pdo, $userId),
     'message'   => $correct
         ? ($completed ? 'Correct! Module complete. Your certificate is ready.' : 'Correct!')
         : 'Not quite. Try again or open the hint.',
